@@ -34,7 +34,13 @@ export interface Provider {
   avatar_url: string;
 }
 
+interface Availability {
+  hour: number;
+  available: boolean;
+}
+
 const CreateAppointment: React.FC = () => {
+  const [availability, setAvailability] = useState<Availability[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -53,11 +59,27 @@ const CreateAppointment: React.FC = () => {
     goBack();
   }, [goBack]);
 
+  // Buscar providers para listagem horizontal acima
   useEffect(() => {
     api.get('providers').then((response) => {
       setProviders(response.data);
     });
   }, []);
+
+  // Buscar disponibilidade do dia selecionado
+  useEffect(() => {
+    api
+      .get(`/providers/${selectedProvider}/day-availability`, {
+        params: {
+          year: selectedDate.getFullYear(),
+          month: selectedDate.getMonth() + 1,
+          day: selectedDate.getDate(),
+        },
+      })
+      .then((response) => {
+        setAvailability(response.data);
+      });
+  }, [selectedDate, selectedProvider]);
 
   const handleSelectProvider = useCallback((providerId: string) => {
     setSelectedProvider(providerId);
